@@ -72,7 +72,7 @@ private:
     int cluster[1000]; //to store for each hit, the cluster it belongs to
     float cluster_size[1000];//to store the size of each cluster
     geometry_msgs::Point cluster_middle[1000];//to store the middle of each cluster
-    float cluster_dynamic[1000];//to store the percentage of the cluster that is dynamic
+    int cluster_dynamic[1000];//to store the percentage of the cluster that is dynamic
 
     //to perform detection of legs and to store them
     int nb_legs_detected;
@@ -255,7 +255,7 @@ public:
         nb_pts++;
 
         for (int loop = 1; loop < nb_beams; loop++)//loop over all the hits
-//            if DISTANCE between (the previous hit and the current one) is higher than "cluster_threshold"
+            // if DISTANCE between (the previous hit and the current one) is higher than "cluster_threshold"
             if (distancePoints(current_scan[loop - 1], current_scan[loop]) > cluster_threshold) {
                 //the current hit doesnt belong to the same hit
                 cluster[loop - 1] = nb_cluster;
@@ -275,7 +275,7 @@ public:
                 cluster_middle[nb_cluster] = current_scan[middle];
 
                 //- cluster_dynamic to store the percentage of hits of the current cluster that are dynamic
-                cluster_dynamic[nb_cluster] = ((float) nb_dynamic / (float) nb_cluster_pts) * 100.0;
+                cluster_dynamic[nb_cluster] = nb_dynamic / nb_cluster_pts;
 
                 //graphical display of the end of the current cluster in red
                 display[nb_pts] = current_scan[end];
@@ -287,7 +287,7 @@ public:
                 nb_pts++;
 
                 //textual display
-                ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %f", nb_cluster, start,
+                ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %i", nb_cluster, start,
                          current_scan[start].x, current_scan[start].y, end, current_scan[end].x, current_scan[end].y,
                          cluster_size[nb_cluster], cluster_dynamic[nb_cluster]);
 
@@ -313,7 +313,7 @@ public:
 
         //Dont forget to update the different information for the last cluster
         int close_loop = nb_beams - 1;
-        ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %f", nb_cluster, start,
+        ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %i", nb_cluster, start,
                  current_scan[start].x, current_scan[start].y, close_loop, current_scan[close_loop].x,
                  current_scan[close_loop].y, cluster_size[nb_cluster], cluster_dynamic[nb_cluster]);
 
@@ -336,34 +336,35 @@ public:
 /*//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     void detect_legs() {
-// a leg is a cluster:
-// - with a size higher than "leg_size_min";
-// - with a size lower than "leg_size_max;
-// if more than "dynamic_threshold"% of its hits are dynamic the leg is considered to be dynamic
+        // a leg is a cluster:
+        // - with a size higher than "leg_size_min";
+        // - with a size lower than "leg_size_max;
+        // if more than "dynamic_threshold"% of its hits are dynamic the leg is considered to be dynamic
 
         ROS_INFO("detecting legs");
         nb_legs_detected = 0;
 
-        /*nb_pts = 0;
-        for (int loop=0; loop<nb_cluster; loop++)//loop over all the clusters
-            if the size of the current cluster is higher than "leg_size_min" and lower than "leg_size_max"
-            then the current cluster is a leg
+        nb_pts = 0;
+        for (int loop = 0; loop < nb_cluster; loop++)//loop over all the clusters
+            if (cluster_size[loop] > leg_size_min and cluster_size[loop] < leg_size_max) {
 
                 // we update:
-                - the leg_detected table to store the middle of the moving leg;
-                - the leg_cluster to store the cluster corresponding to a leg;
-                - the leg_dynamic to know if the leg is dynamic or not.
+                //- the leg_detected table to store the middle of the moving leg;
+                leg_detected[nb_legs_detected] = cluster_middle[loop];
 
-                if ( leg_dynamic[nb_legs_detected] )
-                {
+                //- the leg_cluster to store the cluster corresponding to a leg;
+                leg_cluster[nb_legs_detected] = loop;
+
+                //- the leg_dynamic to know if the leg is dynamic or not.
+                leg_dynamic[nb_legs_detected] = cluster_dynamic[loop];
+
+                if (leg_dynamic[nb_legs_detected]) {
                     ROS_INFO("moving leg found: %i -> cluster = %i, (%f, %f), size: %f, dynamic: %i", nb_legs_detected,
-                                                                                                      loop,
-                                                                                                      leg_detected[nb_legs_detected].x,
-                                                                                                      leg_detected[nb_legs_detected].y,
-                                                                                                      cluster_size[loop],
-                                                                                                      cluster_dynamic[loop]);
-                    for(int loop2=0; loop2<nb_beams; loop2++)
-                        if ( cluster[loop2] == loop ) {
+                             loop, leg_detected[nb_legs_detected].x, leg_detected[nb_legs_detected].y,
+                             cluster_size[loop], cluster_dynamic[loop]);
+
+                    for (int loop2 = 0; loop2 < nb_beams; loop2++)
+                        if (cluster[loop2] == loop) {
 
                             // moving legs are yellow
                             display[nb_pts] = current_scan[loop2];
@@ -375,17 +376,13 @@ public:
 
                             nb_pts++;
                         }
-                }
-                else
-                {
+                } else {
                     ROS_INFO("static leg found: %i -> cluster = %i, (%f, %f), size: %f, dynamic: %i", nb_legs_detected,
-                                                                                                      loop,
-                                                                                                      leg_detected[nb_legs_detected].x,
-                                                                                                      leg_detected[nb_legs_detected].y,
-                                                                                                      cluster_size[loop],
-                                                                                                      cluster_dynamic[loop]);
-                    for(int loop2=0; loop2<nb_beams; loop2++)
-                        if ( cluster[loop2] == loop ) {
+                             loop, leg_detected[nb_legs_detected].x, leg_detected[nb_legs_detected].y,
+                             cluster_size[loop], cluster_dynamic[loop]);
+
+                    for (int loop2 = 0; loop2 < nb_beams; loop2++)
+                        if (cluster[loop2] == loop) {
 
                             // static legs are white
                             display[nb_pts] = current_scan[loop2];
@@ -401,8 +398,8 @@ public:
 
                 nb_legs_detected++;
 
-        nb_pts++;
-                }*/
+                nb_pts++;
+            }
 
         if (nb_legs_detected)
             ROS_INFO("%d legs have been detected.\n", nb_legs_detected);

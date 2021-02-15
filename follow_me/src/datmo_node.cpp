@@ -72,7 +72,7 @@ private:
     int cluster[1000]; //to store for each hit, the cluster it belongs to
     float cluster_size[1000];//to store the size of each cluster
     geometry_msgs::Point cluster_middle[1000];//to store the middle of each cluster
-    int cluster_dynamic[1000];//to store the percentage of the cluster that is dynamic    
+    float cluster_dynamic[1000];//to store the percentage of the cluster that is dynamic
 
     //to perform detection of legs and to store them
     int nb_legs_detected;
@@ -230,10 +230,10 @@ public:
 /*//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
     void perform_clustering() {
-//store in the table cluster, the cluster of each hit of the laser
-//if the distance between the previous hit and the current one is higher than "cluster_threshold"
-//then we end the current cluster with the previous hit and start a new cluster with the current hit
-//else the current hit belongs to the current cluster
+        //store in the table cluster, the cluster of each hit of the laser
+        //if the distance between the previous hit and the current one is higher than "cluster_threshold"
+        //then we end the current cluster with the previous hit and start a new cluster with the current hit
+        //else the current hit belongs to the current cluster
 
         ROS_INFO("performing clustering");
 
@@ -244,7 +244,7 @@ public:
         int end;
         int nb_dynamic = 0;// to count the number of hits of the current cluster that are dynamic
 
-        /* nb_pts = 0;
+        nb_pts = 0;
         //graphical display of the start of the current cluster in green
         display[nb_pts] = current_scan[start];
 
@@ -254,51 +254,62 @@ public:
         colors[nb_pts].a = 1.0;
         nb_pts++;
 
-        for( int loop=1; loop<nb_beams; loop++ )//loop over all the hits
-            if DISTANCE between (the previous hit and the current one) is higher than "cluster_threshold"
-            {//the current hit doesnt belong to the same hit
-                  cluster[loop-1] = nb_cluster;
-                  nb_dynamic = ...;
+        for (int loop = 1; loop < nb_beams; loop++)//loop over all the hits
+//            if DISTANCE between (the previous hit and the current one) is higher than "cluster_threshold"
+            if (distancePoints(current_scan[loop - 1], current_scan[loop]) > cluster_threshold) {
+                //the current hit doesnt belong to the same hit
+                cluster[loop - 1] = nb_cluster;
+                    if (dynamic[loop])
+                        nb_dynamic += 1;
 
-                  1/ we end the current cluster, so we update:
-                  - end to store the last hit of the current cluster
-                  end = ...;
-                  - cluster_size to store the size of the cluster ie, the euclidian distance between the first hit of the cluster and the last one
-                  - cluster_middle to store the middle of the cluster
-                  - cluster_dynamic to store the percentage of hits of the current cluster that are dynamic
+                //1/ we end the current cluster, so we update:
+                //- end to store the last hit of the current cluster
+                end = loop - 1;
 
-                  //graphical display of the end of the current cluster in red
-                  display[nb_pts] = current_scan[end];
+                //- cluster_size to store the size of the cluster ie, the euclidean distance between the first hit of the cluster and the last one
+                cluster_size[nb_cluster] = distancePoints(current_scan[start], current_scan[end]);
 
-                  colors[nb_pts].r = 1;
-                  colors[nb_pts].g = 0;
-                  colors[nb_pts].b = 0;
-                  colors[nb_pts].a = 1.0;
-                  nb_pts++;
+                // - cluster_middle to store the middle of the cluster
+                int nb_cluster_pts = (end - start) + 1;
+                int middle = std::round(nb_cluster_pts / 2.0);
+                cluster_middle[nb_cluster] = current_scan[middle];
 
-                  //textual display
-                  ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %i", nb_cluster, start, current_scan[start].x, current_scan[start].y, end, current_scan[end].x, current_scan[end].y, cluster_size[nb_cluster], cluster_dynamic[nb_cluster]);
+                //- cluster_dynamic to store the percentage of hits of the current cluster that are dynamic
+                cluster_dynamic[nb_cluster] = (float) nb_dynamic / (float) nb_cluster_pts;
 
-                  2/ we start a new cluster with the current hit
-                  nb_cluster++;
-                  start = ...;
-                  nb_dynamic = 0;// to count the number of hits of the current cluster that are dynamic
+                //graphical display of the end of the current cluster in red
+                display[nb_pts] = current_scan[end];
 
-                  //graphical display of the start of the current cluster in green
-                  display[nb_pts] = current_scan[start];
+                colors[nb_pts].r = 1;
+                colors[nb_pts].g = 0;
+                colors[nb_pts].b = 0;
+                colors[nb_pts].a = 1.0;
+                nb_pts++;
 
-                  colors[nb_pts].r = 0;
-                  colors[nb_pts].g = 1;
-                  colors[nb_pts].b = 0;
-                  colors[nb_pts].a = 1.0;
-                  nb_pts++;
+                //textual display
+                ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %f", nb_cluster, start,
+                         current_scan[start].x, current_scan[start].y, end, current_scan[end].x, current_scan[end].y,
+                         cluster_size[nb_cluster], cluster_dynamic[nb_cluster]);
 
+                //2/ we start a new cluster with the current hit
+                nb_cluster++;
+                start = loop;
+                nb_dynamic = 0;// to count the number of hits of the current cluster that are dynamic
+
+                //graphical display of the start of the current cluster in green
+                display[nb_pts] = current_scan[start];
+
+                colors[nb_pts].r = 0;
+                colors[nb_pts].g = 1;
+                colors[nb_pts].b = 0;
+                colors[nb_pts].a = 1.0;
+                nb_pts++;
+
+            } else {
+                cluster[loop - 1] = nb_cluster;
+                if (dynamic[loop])
+                    nb_dynamic += 1;
             }
-            else
-            {
-                cluster[loop-1] = nb_cluster;
-                nb_dynamic = ...;
-            }*/
 
         //Dont forget to update the different information for the last cluster
         //...

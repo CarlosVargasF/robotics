@@ -259,8 +259,8 @@ public:
             if (distancePoints(current_scan[loop - 1], current_scan[loop]) > cluster_threshold) {
                 //the current hit doesnt belong to the same hit
                 cluster[loop - 1] = nb_cluster;
-                    if (dynamic[loop])
-                        nb_dynamic += 1;
+                if (dynamic[loop])
+                    nb_dynamic += 1;
 
                 //1/ we end the current cluster, so we update:
                 //- end to store the last hit of the current cluster
@@ -271,11 +271,11 @@ public:
 
                 // - cluster_middle to store the middle of the cluster
                 int nb_cluster_pts = (end - start) + 1;
-                int middle = std::round(nb_cluster_pts / 2.0);
+                int middle = std::floor(nb_cluster_pts / 2.0) + start;
                 cluster_middle[nb_cluster] = current_scan[middle];
 
                 //- cluster_dynamic to store the percentage of hits of the current cluster that are dynamic
-                cluster_dynamic[nb_cluster] = (float) nb_dynamic / (float) nb_cluster_pts;
+                cluster_dynamic[nb_cluster] = ((float) nb_dynamic / (float) nb_cluster_pts) * 100.0;
 
                 //graphical display of the end of the current cluster in red
                 display[nb_pts] = current_scan[end];
@@ -312,7 +312,18 @@ public:
             }
 
         //Dont forget to update the different information for the last cluster
-        //...
+        int close_loop = nb_beams - 1;
+        ROS_INFO("cluster[%i]: [%i](%f, %f) -> [%i](%f, %f), size: %f, dynamic: %f", nb_cluster, start,
+                 current_scan[start].x, current_scan[start].y, close_loop, current_scan[close_loop].x,
+                 current_scan[close_loop].y, cluster_size[nb_cluster], cluster_dynamic[nb_cluster]);
+
+        display[nb_pts] = current_scan[close_loop];
+
+        colors[nb_pts].r = 1;
+        colors[nb_pts].g = 0;
+        colors[nb_pts].b = 0;
+        colors[nb_pts].a = 1.0;
+        nb_pts++;
 
         //graphical display of the results
         populateMarkerTopic();

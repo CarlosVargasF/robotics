@@ -196,31 +196,28 @@ public:
 
         ROS_INFO("detecting motion");
 
-        /* nb_pts = 0;
-         for (int loop=0; loop<nb_beams; loop++ )
-          {//loop over all the hits
-            the detect of motion ONLY takes place when the robot is not moving, ie when current_robot_moving is false
-            when current_robot_moving is true, dynamic[loop] is false for all the beams
+        for (int loop = 0; loop < nb_beams; loop++) {//loop over all the hits
+            dynamic[loop] = false;
 
-            if the difference between ( the background and the current range ) is higher than "detection_threshold"
-            then
-                 dynamic[loop] = true;//the current hit is dynamic
-            else
-                dynamic[loop] = false;//else its static
-
-        if ( dynamic[loop] ) {
-
-            //display in blue of hits that are dynamic
-            display[nb_pts] = current_scan[loop];
-
-            colors[nb_pts].r = 0;
-            colors[nb_pts].g = 0;
-            colors[nb_pts].b = 1;
-            colors[nb_pts].a = 1.0;
-
-            nb_pts++;
+            if (std::abs(background[loop] - r[loop]) > detection_threshold) {
+                dynamic[loop] = true;
             }
-        }*/
+
+            if (dynamic[loop]) {
+
+                ROS_INFO("[%i](%f, %f) is dynamic", loop, current_scan[loop].x, current_scan[loop].y);
+
+                //display in blue of hits that are dynamic
+                display[nb_pts] = current_scan[loop];
+
+                colors[nb_pts].r = 0;
+                colors[nb_pts].g = 0;
+                colors[nb_pts].b = 1;
+                colors[nb_pts].a = 1.0;
+
+                nb_pts++;
+            }
+        }
 
         //graphical display of the results
         populateMarkerTopic();

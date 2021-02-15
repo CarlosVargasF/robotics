@@ -412,54 +412,70 @@ public:
     }//detect_legs
 
     void detect_persons() {
-// a person has two legs located at less than "legs_distance_max" one from the other
-// a moving person (ie, person_dynamic array) has 2 legs that are dynamic
+        // a person has two legs located at less than "legs_distance_max" one from the other
+        // a moving person (ie, person_dynamic array) has 2 legs that are dynamic
 
         ROS_INFO("detecting persons");
         nb_persons_detected = 0;
 
-        /*for (int loop_leg1=0; loop_leg1<nb_legs_detected; loop_leg1++)//loop over all the legs
-            for (int loop_leg2=loop_leg1+1; loop_leg2<nb_legs_detected; loop_leg2++)//loop over all the legs
-                if the distance between two legs is lower than "legs_distance_max"
-                then we find a person
+        for (int loop_leg1 = 0; loop_leg1 < nb_legs_detected; loop_leg1++)//loop over all the legs
+            for (int loop_leg2 = loop_leg1 + 1; loop_leg2 < nb_legs_detected; loop_leg2++)//loop over all the legs
+                //if the distance between two legs is lower than "legs_distance_max"
+                //then we find a person
+            {
+                float dist_bt_legs = distancePoints(leg_detected[loop_leg1], leg_detected[loop_leg2]);
+                if (dist_bt_legs < legs_distance_max) {
 
-                // we update the person_detected table to store the middle of the person
-                // we update the person_dynamic table to know if the person is moving or not
-                if ( person_dynamic[nb_persons_detected] )
-                {
-                    ROS_INFO("moving person detected: leg[%i]+leg[%i] -> (%f, %f)", loop_leg1,
-                                                                                    loop_leg2,
-                                                                                    person_detected[nb_persons_detected].x,
-                                                                                    person_detected[nb_persons_detected].y);
-                    // a moving person detected is green
-                    display[nb_pts] = person_detected[nb_persons_detected];
+                    // *********************************************************************
+                    // *********************************************************************
+                    // *********************************************************************
+                    // THIS IS WRONG! PLEASE CORRECT!
+                    // we update the person_detected table to store the middle of the person
+                    int person_middle = std::floor(dist_bt_legs / 2.0);
 
-                    colors[nb_pts].r = 0;
-                    colors[nb_pts].g = 1;
-                    colors[nb_pts].b = 0;
-                    colors[nb_pts].a = 1.0;
+                    //float x_mid = std::abs(leg_detected[loop_leg1].x  - leg_detected[loop_leg2].x) / 2.0;
+                    //float y_mid = std::abs(leg_detected[loop_leg1].y  - leg_detected[loop_leg2].y) / 2.0;
 
-                    nb_pts++;
+                    person_detected[nb_persons_detected] = current_scan[person_middle];
+                    // *********************************************************************
+                    // *********************************************************************
+                    // *********************************************************************
+
+
+                    // we update the person_dynamic table to know if the person is moving or not
+                    person_dynamic[nb_persons_detected] = leg_dynamic[loop_leg1] || leg_dynamic[loop_leg2];
+
+                    if (person_dynamic[nb_persons_detected]) {
+                        ROS_INFO("moving person detected: leg[%i]+leg[%i] -> (%f, %f)", loop_leg1, loop_leg2,
+                                 person_detected[nb_persons_detected].x, person_detected[nb_persons_detected].y);
+                        // a moving person detected is green
+                        display[nb_pts] = person_detected[nb_persons_detected];
+
+                        colors[nb_pts].r = 0;
+                        colors[nb_pts].g = 1;
+                        colors[nb_pts].b = 0;
+                        colors[nb_pts].a = 1.0;
+
+                        nb_pts++;
+                    } else {
+                        ROS_INFO("static person detected: leg[%i]+leg[%i] -> (%f, %f)", loop_leg1,
+                                 loop_leg2,
+                                 person_detected[nb_persons_detected].x,
+                                 person_detected[nb_persons_detected].y);
+                        // a static person detected is red
+                        display[nb_pts] = person_detected[nb_persons_detected];
+
+                        colors[nb_pts].r = 1;
+                        colors[nb_pts].g = 0;
+                        colors[nb_pts].b = 0;
+                        colors[nb_pts].a = 1.0;
+
+                        nb_pts++;
+                    }
+
+                    nb_persons_detected++;
                 }
-                else
-                {
-                    ROS_INFO("static person detected: leg[%i]+leg[%i] -> (%f, %f)", loop_leg1,
-                                                                                    loop_leg2,
-                                                                                    person_detected[nb_persons_detected].x,
-                                                                                    person_detected[nb_persons_detected].y);
-                    // a static person detected is red
-                    display[nb_pts] = person_detected[nb_persons_detected];
-
-                    colors[nb_pts].r = 1;
-                    colors[nb_pts].g = 0;
-                    colors[nb_pts].b = 0;
-                    colors[nb_pts].a = 1.0;
-
-                    nb_pts++;
-                }
-
-                nb_persons_detected++;
-            }*/
+            }
 
         if (nb_persons_detected) {
             ROS_INFO("%d persons have been detected.\n", nb_persons_detected);
@@ -478,10 +494,10 @@ public:
 
         for (int loop = 0; loop < nb_persons_detected; loop++)
             if (person_dynamic[loop]) {
-
+                ROS_INFO("person %i is moving", loop);
                 //we update moving_person_tracked and publish it
-                /*    moving_person_tracked = ...
-                pub_datmo.publish(moving_person_tracked);*/
+                moving_person_tracked = person_detected[loop];
+                pub_datmo.publish(moving_person_tracked);
 
             }
         ROS_INFO("detecting a moving person done");

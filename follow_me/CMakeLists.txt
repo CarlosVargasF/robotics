@@ -111,7 +111,7 @@ include_directories(
 add_executable(datmo_node src/datmo_node.cpp)
 add_executable(action_node src/action_node.cpp)
 add_executable(robot_moving_node src/robot_moving_node.cpp)
-add_executable(obstacle_detection_node rc/obstacle_detection_node.cpp)
+add_executable(obstacle_detection_node src/obstacle_detection_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

@@ -275,7 +275,7 @@ public:
                 cluster_middle[nb_cluster] = current_scan[middle];
 
                 //- cluster_dynamic to store the percentage of hits of the current cluster that are dynamic
-                cluster_dynamic[nb_cluster] = nb_dynamic / nb_cluster_pts;
+                cluster_dynamic[nb_cluster] = (nb_dynamic / float(nb_cluster_pts)) * 100;
 
                 //graphical display of the end of the current cluster in red
                 display[nb_pts] = current_scan[end];
@@ -356,7 +356,7 @@ public:
                 leg_cluster[nb_legs_detected] = loop;
 
                 //- the leg_dynamic to know if the leg is dynamic or not.
-                leg_dynamic[nb_legs_detected] = cluster_dynamic[loop];
+                leg_dynamic[nb_legs_detected] = cluster_dynamic[loop] > dynamic_threshold;
 
                 if (leg_dynamic[nb_legs_detected]) {
                     ROS_INFO("moving leg found: %i -> cluster = %i, (%f, %f), size: %f, dynamic: %i", nb_legs_detected,
@@ -417,6 +417,9 @@ public:
 
         ROS_INFO("detecting persons");
         nb_persons_detected = 0;
+        geometry_msgs::Point person_middle;
+        geometry_msgs::Point leg1;
+        geometry_msgs::Point leg2;
 
         for (int loop_leg1 = 0; loop_leg1 < nb_legs_detected; loop_leg1++)//loop over all the legs
             for (int loop_leg2 = loop_leg1 + 1; loop_leg2 < nb_legs_detected; loop_leg2++)//loop over all the legs
@@ -425,22 +428,16 @@ public:
             {
                 float dist_bt_legs = distancePoints(leg_detected[loop_leg1], leg_detected[loop_leg2]);
                 if (dist_bt_legs < legs_distance_max) {
-
-                    // *********************************************************************
-                    // *********************************************************************
-                    // *********************************************************************
-                    // THIS IS WRONG! PLEASE CORRECT!
+                    
                     // we update the person_detected table to store the middle of the person
-                    int person_middle = std::floor(dist_bt_legs / 2.0);
+                    leg1 = leg_detected[loop_leg1];
+                    leg2 = leg_detected[loop_leg2];
 
-                    //float x_mid = std::abs(leg_detected[loop_leg1].x  - leg_detected[loop_leg2].x) / 2.0;
-                    //float y_mid = std::abs(leg_detected[loop_leg1].y  - leg_detected[loop_leg2].y) / 2.0;
+                    person_middle.x = ((leg2.x - leg1.x) / 2) + leg1.x;
+                    person_middle.y = ((leg2.y - leg1.y) / 2) + leg1.y;
+                    person_middle.z = 0.0;
 
-                    person_detected[nb_persons_detected] = current_scan[person_middle];
-                    // *********************************************************************
-                    // *********************************************************************
-                    // *********************************************************************
-
+                    person_detected[nb_persons_detected] = person_middle;
 
                     // we update the person_dynamic table to know if the person is moving or not
                     person_dynamic[nb_persons_detected] = leg_dynamic[loop_leg1] || leg_dynamic[loop_leg2];

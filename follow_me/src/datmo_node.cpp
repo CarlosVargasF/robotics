@@ -253,7 +253,7 @@ public:
         int end;
         int nb_dynamic = 0;// to count the number of hits of the current cluster that are dynamic
 
-        nb_pts = 0;
+        //nb_pts = 0;
         //graphical display of the start of the current cluster in green
         display[nb_pts] = current_scan[start];
 
@@ -353,7 +353,7 @@ public:
         ROS_INFO("detecting legs");
         nb_legs_detected = 0;
 
-        nb_pts = 0;
+        //nb_pts = 0;
         for (int loop = 0; loop < nb_cluster; loop++)//loop over all the clusters
             if (cluster_size[loop] > leg_size_min and cluster_size[loop] < leg_size_max) {
 

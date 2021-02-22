@@ -449,7 +449,7 @@ public:
                     person_detected[nb_persons_detected] = person_middle;
 
                     // we update the person_dynamic table to know if the person is moving or not
-                    person_dynamic[nb_persons_detected] = leg_dynamic[loop_leg1] || leg_dynamic[loop_leg2];
+                    person_dynamic[nb_persons_detected] = leg_dynamic[loop_leg1] && leg_dynamic[loop_leg2];
 
                     if (person_dynamic[nb_persons_detected]) {
                         ROS_INFO("moving person detected: leg[%i]+leg[%i] -> (%f, %f)", loop_leg1, loop_leg2,
